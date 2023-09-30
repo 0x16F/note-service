@@ -4,7 +4,7 @@ The Notes Service is a RESTful API that allows users to perform various operatio
 
 ## Default User
 - **Login:** admin
-- **Password:** admin
+- **Password:** qwerty12
 
 ## Routes
 
