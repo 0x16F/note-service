@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=model.go -destination=mocks/service.go
+
 type Session struct {
 	Id           uuid.UUID `json:"id" redis:"id"`
 	UserId       uuid.UUID `json:"user_id" redis:"user_id"`

@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=model.go -destination=mocks/service.go
+
 const DEFAULT_TTL = time.Hour
 
 type Note struct {
