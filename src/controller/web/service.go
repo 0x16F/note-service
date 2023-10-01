@@ -2,17 +2,21 @@ package web
 
 import (
 	"fmt"
+	"notes-manager/src/controller/web/responses"
 	"notes-manager/src/controller/web/routes"
 	"notes-manager/src/usecase/repository"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm/logger"
 )
 
 func New(repo *repository.Repository) Web {
 	cfg := fiber.Config{
-		JSONEncoder: json.Marshal,
-		JSONDecoder: json.Unmarshal,
+		JSONEncoder:  json.Marshal,
+		JSONDecoder:  json.Unmarshal,
+		BodyLimit:    10 * 1024 * 1024, // 10 mb
+		ErrorHandler: responses.CustomErrorHandler(),
 	}
 
 	w := &web{
@@ -26,6 +30,8 @@ func New(repo *repository.Repository) Web {
 }
 
 func (w *web) SetupRoutes() {
+	w.app.Use(logger.New)
+
 	v0 := w.app.Group("/v0")
 	{
 		auth := v0.Group("/auth")
