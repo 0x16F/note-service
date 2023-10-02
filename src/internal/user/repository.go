@@ -8,21 +8,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type repository struct {
+type RepositoryDB struct {
 	db *gorm.DB
 }
 
-func newDatabaseRepo(db *gorm.DB) Repository {
-	return &repository{
+func NewDatabaseRepo(db *gorm.DB) Repository {
+	return &RepositoryDB{
 		db: db,
 	}
 }
 
-func (r *repository) Create(ctx context.Context, user *User) error {
+func (r *RepositoryDB) Create(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Model(&User{}).Create(user).Error
 }
 
-func (r *repository) Fetch(ctx context.Context, userId uuid.UUID) (*User, error) {
+func (r *RepositoryDB) Fetch(ctx context.Context, userId uuid.UUID) (*User, error) {
 	u := User{}
 
 	if err := r.db.WithContext(ctx).Model(&User{}).Where("id = $1", userId.String()).First(&u).Error; err != nil {
@@ -36,7 +36,7 @@ func (r *repository) Fetch(ctx context.Context, userId uuid.UUID) (*User, error)
 	return &u, nil
 }
 
-func (r *repository) FetchLogin(ctx context.Context, login string) (*User, error) {
+func (r *RepositoryDB) FetchLogin(ctx context.Context, login string) (*User, error) {
 	u := User{}
 
 	if err := r.db.WithContext(ctx).Model(&User{}).Where("login = $1", strings.ToLower(login)).First(&u).Error; err != nil {
@@ -50,6 +50,6 @@ func (r *repository) FetchLogin(ctx context.Context, login string) (*User, error
 	return &u, nil
 }
 
-func (r *repository) Update(ctx context.Context, user *User) error {
+func (r *RepositoryDB) Update(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Model(&User{}).Updates(user).Error
 }

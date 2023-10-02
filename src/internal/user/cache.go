@@ -10,24 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type cachedRepository struct {
+type RepositoryCache struct {
 	repo   Repository
 	client *redis.Client
 }
 
 func NewRepo(db *gorm.DB, client *redis.Client) Repository {
-	return &cachedRepository{
-		repo:   newDatabaseRepo(db),
+	return &RepositoryCache{
+		repo:   NewDatabaseRepo(db),
 		client: client,
 	}
 }
 
-func (r *cachedRepository) Create(ctx context.Context, user *User) error {
+func (r *RepositoryCache) Create(ctx context.Context, user *User) error {
 	// Создаем пользователя
 	return r.repo.Create(ctx, user)
 }
 
-func (r *cachedRepository) Fetch(ctx context.Context, userId uuid.UUID) (*User, error) {
+func (r *RepositoryCache) Fetch(ctx context.Context, userId uuid.UUID) (*User, error) {
 	// Проверяем существует ли пользователь в кэше
 	exists := true
 
@@ -75,7 +75,7 @@ func (r *cachedRepository) Fetch(ctx context.Context, userId uuid.UUID) (*User, 
 	return &user, nil
 }
 
-func (r *cachedRepository) FetchLogin(ctx context.Context, login string) (*User, error) {
+func (r *RepositoryCache) FetchLogin(ctx context.Context, login string) (*User, error) {
 	// Проверяем существует ли пользователь в кэше
 	exists := true
 
@@ -126,7 +126,7 @@ func (r *cachedRepository) FetchLogin(ctx context.Context, login string) (*User,
 	return &user, nil
 }
 
-func (r *cachedRepository) Update(ctx context.Context, user *User) error {
+func (r *RepositoryCache) Update(ctx context.Context, user *User) error {
 	// Обновляем данные пользователя в БД
 	if err := r.repo.Update(ctx, user); err != nil {
 		return err

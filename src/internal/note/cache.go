@@ -9,19 +9,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type cachedRepository struct {
+type RepositoryCache struct {
 	repo   Repository
 	client *redis.Client
 }
 
 func NewRepo(db *gorm.DB, client *redis.Client) Repository {
-	return &cachedRepository{
-		repo:   newDatabaseRepo(db),
+	return &RepositoryCache{
+		repo:   NewDatabaseRepo(db),
 		client: client,
 	}
 }
 
-func (r *cachedRepository) Create(ctx context.Context, note *Note) error {
+func (r *RepositoryCache) Create(ctx context.Context, note *Note) error {
 	if err := r.repo.Create(ctx, note); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (r *cachedRepository) Create(ctx context.Context, note *Note) error {
 	return r.client.Del(ctx, getNotesKey(note.AuthorId)).Err()
 }
 
-func (r *cachedRepository) Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error) {
+func (r *RepositoryCache) Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error) {
 	// Проверяем существует ли запись в кэше
 	exists := true
 
@@ -78,7 +78,7 @@ func (r *cachedRepository) Fetch(ctx context.Context, noteId uuid.UUID) (*Note, 
 	return &note, nil
 }
 
-func (r *cachedRepository) FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error) {
+func (r *RepositoryCache) FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error) {
 	// Проверяем существует ли запись в кэше
 	exists := true
 
@@ -126,7 +126,7 @@ func (r *cachedRepository) FetchAll(ctx context.Context, userId uuid.UUID) ([]*N
 	return notes, nil
 }
 
-func (r *cachedRepository) Delete(ctx context.Context, noteId uuid.UUID) error {
+func (r *RepositoryCache) Delete(ctx context.Context, noteId uuid.UUID) error {
 	note, err := r.repo.Fetch(ctx, noteId)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (r *cachedRepository) Delete(ctx context.Context, noteId uuid.UUID) error {
 	return r.client.Del(ctx, getNotesKey(note.AuthorId), getNoteKey(noteId)).Err()
 }
 
-func (r *cachedRepository) Update(ctx context.Context, note *NoteDTO) error {
+func (r *RepositoryCache) Update(ctx context.Context, note *NoteDTO) error {
 	n, err := r.Fetch(ctx, note.Id)
 	if err != nil {
 		return err

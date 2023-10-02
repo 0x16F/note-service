@@ -34,7 +34,7 @@ func main() {
 	repo := repository.New(db, client)
 
 	// apply migrations
-	if err := migrate.ApplyMigrations(false); err != nil {
+	if err := migrate.ApplyMigrations(&cfg.Database, false, "file://migrations"); err != nil {
 		logrus.Fatalf("failed to apply migrations, %v", err)
 	}
 

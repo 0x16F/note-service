@@ -2,7 +2,7 @@ package migrate
 
 import (
 	"fmt"
-	"notes-manager/src/usecase/config"
+	"notes-manager/src/usecase/repository/pgconnector"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -11,21 +11,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func ApplyMigrations(down bool) error {
+func ApplyMigrations(cfg *pgconnector.Config, down bool, migrationsPath string) error {
 	var gErr error
 
-	// Инициализируем конфиг
-	cfg, err := config.New()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.DB)
+	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DB)
 
 	attempts := 0
 
 	for attempts <= 4 {
-		m, err := migrate.New("file://migrations", url)
+		m, err := migrate.New(migrationsPath, url)
 		if err != nil && attempts != 4 {
 			gErr = err
 			attempts += 1
