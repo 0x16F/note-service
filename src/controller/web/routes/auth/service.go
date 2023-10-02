@@ -17,6 +17,7 @@ func New(repo *repository.Repository) *Router {
 	return &Router{
 		validator: validator.New(),
 		repo:      repo,
+		headers:   headers.New(),
 	}
 }
 
@@ -83,7 +84,7 @@ func (r *Router) Register(c *fiber.Ctx) error {
 }
 
 func (r *Router) Logout(c *fiber.Ctx) error {
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 
 	defer c.ClearCookie("session-id")
 

@@ -1,6 +1,11 @@
 package headers
 
-import "github.com/google/uuid"
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+)
+
+//go:generate mockgen -source=model.go -destination=mocks/service.go
 
 const (
 	SESSION_ID_KEY = "X-Session-Id"
@@ -13,3 +18,9 @@ type Session struct {
 	UserId    uuid.UUID `json:"user_id"`
 	Role      string    `json:"role"`
 }
+
+type Getter interface {
+	GetSession(c *fiber.Ctx) *Session
+}
+
+type getter struct{}

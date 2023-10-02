@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"notes-manager/src/controller/web/headers"
 	"notes-manager/src/usecase/repository"
 
 	"github.com/go-playground/validator/v10"
@@ -9,6 +10,7 @@ import (
 type Router struct {
 	validator *validator.Validate
 	repo      *repository.Repository
+	headers   headers.Getter
 }
 
 type LoginRequest struct {

@@ -18,11 +18,12 @@ func New(repo *repository.Repository) *Router {
 	return &Router{
 		repo:      repo,
 		validator: validator.New(),
+		headers:   headers.New(),
 	}
 }
 
 func (r *Router) FetchAll(c *fiber.Ctx) error {
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 
 	notes, err := r.repo.Notes.FetchAll(c.Context(), s.UserId)
 	if err != nil {
@@ -51,7 +52,7 @@ func (r *Router) Fetch(c *fiber.Ctx) error {
 		return responses.System("failed to fetch note", err.Error())
 	}
 
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 
 	if s.UserId != n.AuthorId {
 		return responses.New(http.StatusForbidden, "you don't have enough permissions to see this note", nil)
@@ -72,7 +73,7 @@ func (r *Router) Create(c *fiber.Ctx) error {
 		return responses.BadRequest("failed to validate some fields", err.Error())
 	}
 
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 	n := note.New(s.UserId, request.Title, request.Content)
 
 	if err := r.repo.Notes.Create(c.Context(), n); err != nil {
@@ -100,7 +101,7 @@ func (r *Router) Delete(c *fiber.Ctx) error {
 		return responses.System("failed to fetch note", err.Error())
 	}
 
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 
 	if s.UserId != n.AuthorId {
 		return responses.New(http.StatusForbidden, "you don't have enough permissions to delete this note", nil)
@@ -134,7 +135,7 @@ func (r *Router) Update(c *fiber.Ctx) error {
 		return responses.System("failed to fetch note", err.Error())
 	}
 
-	s := headers.GetSession(c)
+	s := r.headers.GetSession(c)
 
 	if s.UserId != n.AuthorId {
 		return responses.New(http.StatusForbidden, "you don't have enough permissions to update this note", nil)

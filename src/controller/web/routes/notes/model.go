@@ -1,6 +1,7 @@
 package notes
 
 import (
+	"notes-manager/src/controller/web/headers"
 	"notes-manager/src/usecase/repository"
 
 	"github.com/go-playground/validator/v10"
@@ -10,6 +11,7 @@ import (
 type Router struct {
 	repo      *repository.Repository
 	validator *validator.Validate
+	headers   headers.Getter
 }
 
 type CreateNoteRequest struct {
