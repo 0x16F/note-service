@@ -50,7 +50,7 @@ func (r *cachedRepository) Fetch(ctx context.Context, noteId uuid.UUID) (*Note, 
 		}
 
 		// Кодируем структуру в строку
-		encoded, err := json.Marshal(note)
+		encoded, err := json.MarshalContext(ctx, note)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func (r *cachedRepository) FetchAll(ctx context.Context, userId uuid.UUID) ([]*N
 		}
 
 		// Кодируем структуру в строку
-		encoded, err := json.Marshal(notes)
+		encoded, err := json.MarshalContext(ctx, notes)
 		if err != nil {
 			return nil, err
 		}

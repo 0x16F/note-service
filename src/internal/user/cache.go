@@ -47,7 +47,7 @@ func (r *cachedRepository) Fetch(ctx context.Context, userId uuid.UUID) (*User, 
 		}
 
 		// Кодируем структуру в строку
-		encoded, err := json.Marshal(user)
+		encoded, err := json.MarshalContext(ctx, user)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func (r *cachedRepository) FetchLogin(ctx context.Context, login string) (*User,
 		}
 
 		// Кодируем структуру в строку
-		encoded, err := json.Marshal(user)
+		encoded, err := json.MarshalContext(ctx, user)
 		if err != nil {
 			return nil, err
 		}
