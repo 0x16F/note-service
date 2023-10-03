@@ -3,6 +3,7 @@ package user
 import (
 	"crypto/sha512"
 	"encoding/base64"
+	"fmt"
 	"notes-manager/src/pkg/generator"
 	"strings"
 	"time"
@@ -12,12 +13,12 @@ import (
 
 // getUserLoginKey generates a cache key for the user based on the login.
 func getUserLoginKey(login string) string {
-	return userLoginKeyBase + strings.ToLower(login)
+	return fmt.Sprint(userLoginKeyBase, strings.ToLower(login))
 }
 
 // getUserKey generates a cache key for the user based on the user's ID.
 func getUserKey(userId uuid.UUID) string {
-	return userKeyBase + userId.String()
+	return fmt.Sprint(userKeyBase, userId.String())
 }
 
 // generateHashedPassword returns the hashed version of the password using SHA-512 and the provided salt.

@@ -72,7 +72,7 @@ func (r *Router) Login(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
 		Name:     "session-id",
 		Value:    s.Id.String(),
-		Expires:  s.LastActivity.Add(session.SESSION_TTL),
+		Expires:  s.LastActivity.Add(session.SessionTTL),
 		HTTPOnly: true,
 	})
 

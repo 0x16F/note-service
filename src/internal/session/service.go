@@ -2,7 +2,6 @@ package session
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,48 +9,50 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// getSessionsKey generates a unique Redis key for storing multiple sessions of a user.
 func getSessionsKey(userId uuid.UUID) string {
-	return fmt.Sprintf("ns:sessions:user:%s", userId)
+	return fmt.Sprint(sessionsUserIdKeyBase, userId)
 }
 
+// getSessionKey generates a unique Redis key for a specific session.
 func getSessionKey(sessionId uuid.UUID) string {
-	return fmt.Sprintf("ns:sessions:%s", sessionId)
+	return fmt.Sprint(sessionsKeyBase, sessionId)
 }
 
+// New initializes a new Session instance.
 func New(userId uuid.UUID, role string) *Session {
+	t := time.Now().UTC()
+
 	return &Session{
 		Id:           uuid.New(),
 		UserId:       userId,
 		Role:         role,
-		CreatedAt:    time.Now().UTC(),
-		LastActivity: time.Now().UTC(),
+		CreatedAt:    t,
+		LastActivity: t,
 	}
 }
 
+// UpdateActivity updates the LastActivity timestamp of a session to the current time.
 func (s *Session) UpdateActivity() {
 	s.LastActivity = time.Now().UTC()
 }
 
-func (s *Session) HSet(p redis.Pipeliner) error {
+// HSet populates the Redis hash set with session details.
+func (s *Session) HSet(ctx context.Context, p redis.Pipeliner) error {
 	sessionIdStr := getSessionKey(s.Id)
 
-	if err := p.HSet(context.Background(), sessionIdStr, "id", s.Id.String()).Err(); err != nil {
-		return errors.Join(err, errors.New("failed to set session \"id\""))
+	fields := map[string]interface{}{
+		"id":            s.Id.String(),
+		"user_id":       s.UserId.String(),
+		"role":          s.Role,
+		"created_at":    s.CreatedAt.UTC(),
+		"last_activity": s.LastActivity.UTC(),
 	}
 
-	if err := p.HSet(context.Background(), sessionIdStr, "user_id", s.UserId.String()).Err(); err != nil {
-		return errors.Join(err, errors.New("failed to set session \"user_id\""))
-	}
-	if err := p.HSet(context.Background(), sessionIdStr, "role", s.Role).Err(); err != nil {
-		return errors.Join(err, errors.New("failed to set session \"role\""))
-	}
-
-	if err := p.HSet(context.Background(), sessionIdStr, "created_at", s.CreatedAt.UTC()).Err(); err != nil {
-		return errors.Join(err, errors.New("failed to set session \"created_at\""))
-	}
-
-	if err := p.HSet(context.Background(), sessionIdStr, "last_activity", s.LastActivity.UTC()).Err(); err != nil {
-		return errors.Join(err, errors.New("failed to set session \"last_activity\""))
+	for field, value := range fields {
+		if err := p.HSet(ctx, sessionIdStr, field, value).Err(); err != nil {
+			return fmt.Errorf("failed to set session \"%s\": %w", field, err)
+		}
 	}
 
 	return nil
