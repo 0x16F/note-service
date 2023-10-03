@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewRepo(t *testing.T) {
+var cRepo Repository
+
+func setupC(t *testing.T) context.Context {
 	ctx := context.Background()
 
 	postgresqlC, err := dcontainer.NewPostgres(ctx)
@@ -22,17 +24,15 @@ func TestNewRepo(t *testing.T) {
 	redisC, err := dcontainer.NewRedis(ctx)
 	require.NoError(t, err)
 
-	defer func() {
+	t.Cleanup(func() {
 		if err := postgresqlC.Terminate(ctx); err != nil {
 			t.Fatal(err)
 		}
-	}()
 
-	defer func() {
 		if err := redisC.Terminate(ctx); err != nil {
 			t.Fatal(err)
 		}
-	}()
+	})
 
 	startDir, err := os.Getwd()
 	require.NoError(t, err)
@@ -61,7 +61,9 @@ func TestNewRepo(t *testing.T) {
 	err = migrate.ApplyMigrations(&pCfg, false, "file://"+migrationsPath)
 	require.NoError(t, err)
 
-	defer migrate.ApplyMigrations(&pCfg, true, "file://"+migrationsPath)
+	t.Cleanup(func() {
+		migrate.ApplyMigrations(&pCfg, true, "file://"+migrationsPath)
+	})
 
 	endpoint, err := redisC.Endpoint(ctx, "")
 	require.NoError(t, err)
@@ -75,38 +77,86 @@ func TestNewRepo(t *testing.T) {
 	client, err := rsconnector.Connect(&rCfg)
 	require.NoError(t, err)
 
-	repo := NewRepo(db, client)
+	cRepo = NewRepo(db, client)
 
-	u := New("login", "password")
+	return ctx
+}
 
-	fetchedUser, err := repo.Fetch(ctx, u.Id)
-	require.Error(t, err)
-	require.Nil(t, fetchedUser)
+func TestCreateUserWithRepo(t *testing.T) {
+	ctx := setupC(t)
 
-	err = repo.Create(ctx, u)
+	u, err := New("login", "password")
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	err = cRepo.Create(ctx, u)
+	require.NoError(t, err)
+}
+
+func TestFetchUserWithRepo(t *testing.T) {
+	ctx := setupC(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	err = cRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	fetchedUser, err := cRepo.Fetch(ctx, u.Id)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
 
-	fetchedUser, err = repo.FetchLogin(ctx, u.Login)
+func TestFetchUserByLoginWithRepo(t *testing.T) {
+	ctx := setupC(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	// Ensure user is created first
+	err = cRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	// Fetch the user by login and compare
+	fetchedUser, err := cRepo.FetchLogin(ctx, u.Login)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
 
+func TestUpdateUserWithRepo(t *testing.T) {
+	ctx := setupC(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	err = cRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	// Update user login
 	u.Login = "new login"
-
-	err = repo.Update(ctx, u)
+	err = cRepo.Update(ctx, u)
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	// Fetch updated user and compare
+	fetchedUser, err := cRepo.Fetch(ctx, u.Id)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
 
-	err = repo.Delete(ctx, u.Id)
+func TestDeleteUserWithRepo(t *testing.T) {
+	ctx := setupC(t)
+
+	u, err := New("login", "password")
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	err = cRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	// Delete the user
+	err = cRepo.Delete(ctx, u.Id)
+	require.NoError(t, err)
+
+	// Ensure user is deleted
+	fetchedUser, err := cRepo.Fetch(ctx, u.Id)
 	require.Error(t, err)
 	require.Nil(t, fetchedUser)
 }

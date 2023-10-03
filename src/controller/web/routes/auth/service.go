@@ -52,7 +52,13 @@ func (r *Router) Login(c *fiber.Ctx) error {
 		return responses.System("failed to fetch user by login", err)
 	}
 
-	if !u.ValidatePassword(request.Password) {
+	ok, err := u.ValidatePassword(request.Password)
+	if err != nil {
+		logrus.Error(err)
+		return responses.System("failed to validate password", err)
+	}
+
+	if !ok {
 		return responses.New(http.StatusUnauthorized, "bad password or login", nil)
 	}
 
@@ -93,7 +99,11 @@ func (r *Router) Register(c *fiber.Ctx) error {
 		return responses.BadRequest("failed to validate all fields in struct", err.Error())
 	}
 
-	u := user.New(request.Login, request.Password)
+	u, err := user.New(request.Login, request.Password)
+	if err != nil {
+		logrus.Error(err)
+		return responses.System("failed to init new user struct", err.Error())
+	}
 
 	if err := r.repo.Users.Create(c.Context(), u); err != nil {
 		logrus.Error(err)

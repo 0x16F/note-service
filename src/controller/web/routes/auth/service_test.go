@@ -46,7 +46,8 @@ func TestRouter_Login(t *testing.T) {
 		callback     func(f *fields)
 	}
 
-	u := user.New("login", "password")
+	u, err := user.New("login", "password")
+	require.NoError(t, err)
 
 	tests := []Test{
 		{

@@ -10,19 +10,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
-func TestNewDatabaseRepo(t *testing.T) {
+// global variables for shared resources, such as the database connection and repository
+var rDb *gorm.DB
+var rRepo Repository
+
+func setupR(t *testing.T) context.Context {
 	ctx := context.Background()
 
 	postgresqlC, err := dcontainer.NewPostgres(ctx)
 	require.NoError(t, err)
 
-	defer func() {
+	t.Cleanup(func() {
 		if err := postgresqlC.Terminate(ctx); err != nil {
 			t.Fatal(err)
 		}
-	}()
+	})
 
 	startDir, err := os.Getwd()
 	require.NoError(t, err)
@@ -45,46 +50,94 @@ func TestNewDatabaseRepo(t *testing.T) {
 		DB:       "note_service",
 	}
 
-	db, err := pgconnector.Connect(&cfg)
+	rDb, err = pgconnector.Connect(&cfg)
 	require.NoError(t, err)
 
 	err = migrate.ApplyMigrations(&cfg, false, "file://"+migrationsPath)
 	require.NoError(t, err)
 
-	defer migrate.ApplyMigrations(&cfg, true, "file://"+migrationsPath)
+	t.Cleanup(func() {
+		migrate.ApplyMigrations(&cfg, true, "file://"+migrationsPath)
+	})
 
-	repo := NewDatabaseRepo(db)
+	rRepo = NewDatabaseRepo(rDb)
 
-	u := New("login", "password")
+	return ctx
+}
 
-	fetchedUser, err := repo.Fetch(ctx, u.Id)
-	require.Error(t, err)
-	require.Nil(t, fetchedUser)
+func TestCreateUser(t *testing.T) {
+	ctx := setupR(t)
 
-	err = repo.Create(ctx, u)
+	u, err := New("login", "password")
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	err = rRepo.Create(ctx, u)
+	require.NoError(t, err)
+}
+
+func TestFetchUser(t *testing.T) {
+	ctx := setupR(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	// Ensure user is created first
+	err = rRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	// Fetch the user and compare
+	fetchedUser, err := rRepo.Fetch(ctx, u.Id)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
 
-	fetchedUser, err = repo.FetchLogin(ctx, u.Login)
+func TestFetchUserByLogin(t *testing.T) {
+	ctx := setupR(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	// Ensure user is created first
+	err = rRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	// Fetch the user by login and compare
+	fetchedUser, err := rRepo.FetchLogin(ctx, u.Login)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
+
+func TestUpdateUser(t *testing.T) {
+	ctx := setupR(t)
+
+	u, err := New("login", "password")
+	require.NoError(t, err)
+
+	err = rRepo.Create(ctx, u)
+	require.NoError(t, err)
 
 	u.Login = "new login"
-
-	err = repo.Update(ctx, u)
+	err = rRepo.Update(ctx, u)
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	fetchedUser, err := rRepo.Fetch(ctx, u.Id)
 	require.NoError(t, err)
 	require.Equal(t, u, fetchedUser)
+}
 
-	err = repo.Delete(ctx, u.Id)
+func TestDeleteUser(t *testing.T) {
+	ctx := setupR(t)
+
+	u, err := New("login", "password")
 	require.NoError(t, err)
 
-	fetchedUser, err = repo.Fetch(ctx, u.Id)
+	err = rRepo.Create(ctx, u)
+	require.NoError(t, err)
+
+	err = rRepo.Delete(ctx, u.Id)
+	require.NoError(t, err)
+
+	fetchedUser, err := rRepo.Fetch(ctx, u.Id)
 	require.Error(t, err)
 	require.Nil(t, fetchedUser)
 }

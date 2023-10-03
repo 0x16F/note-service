@@ -79,46 +79,40 @@ func (r *RepositoryCache) Fetch(ctx context.Context, noteId uuid.UUID) (*Note, e
 }
 
 func (r *RepositoryCache) FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error) {
-	// Проверяем существует ли запись в кэше
-	exists := true
-
+	// Attempt to fetch notes from cache
 	encoded, err := r.client.Get(ctx, getNotesKey(userId)).Bytes()
-	if err == redis.Nil {
-		exists = false
-	} else if err != nil {
-		return nil, err
-	}
 
-	// Если её нет в кэше, то берем информацию из БД и добавляем в кэш
-	if !exists {
-		// Получаем пользователя из БД
+	// If the key doesn't exist in cache
+	if err == redis.Nil {
+		// Fetch notes from the database
 		notes, err := r.repo.FetchAll(ctx, userId)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кодируем структуру в строку
+		// Encode the notes slice to JSON
 		encoded, err := json.MarshalContext(ctx, notes)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кешируем запись
+		// Cache the encoded notes
 		if err := r.client.Set(ctx, getNotesKey(userId), string(encoded), DEFAULT_TTL).Err(); err != nil {
 			return nil, err
 		}
 
 		return notes, nil
+	} else if err != nil { // Handle other errors from cache retrieval
+		return nil, err
 	}
 
-	// Декорируем строку в слайс структур
+	// Decode the cached value into a slice of notes
 	notes := make([]*Note, 0)
-
 	if err := json.Unmarshal(encoded, &notes); err != nil {
 		return nil, err
 	}
 
-	// Обновляем время кэша
+	// Refresh cache expiration time
 	if err := r.client.Expire(ctx, getNotesKey(userId), DEFAULT_TTL).Err(); err != nil {
 		return nil, err
 	}

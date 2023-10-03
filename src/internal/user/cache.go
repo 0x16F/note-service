@@ -22,53 +22,48 @@ func NewRepo(db *gorm.DB, client *redis.Client) Repository {
 	}
 }
 
+// Create adds a new user to the database.
 func (r *RepositoryCache) Create(ctx context.Context, user *User) error {
-	// Создаем пользователя
 	return r.repo.Create(ctx, user)
 }
 
+// Fetch retrieves a user either from the cache or the database.
 func (r *RepositoryCache) Fetch(ctx context.Context, userId uuid.UUID) (*User, error) {
-	// Проверяем существует ли пользователь в кэше
-	exists := true
-
+	// Attempt to fetch the user from cache
 	encoded, err := r.client.Get(ctx, getUserKey(userId)).Bytes()
-	if err == redis.Nil {
-		exists = false
-	} else if err != nil {
-		return nil, err
-	}
 
-	// Если его нет в кэше, то берем информацию из БД и добавляем в кэш
-	if !exists {
-		// Получаем пользователя из БД
+	// If the key doesn't exist in cache
+	if err == redis.Nil {
+		// Fetch the user from the database
 		user, err := r.repo.Fetch(ctx, userId)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кодируем структуру в строку
+		// Encode the user struct to JSON
 		encoded, err := json.MarshalContext(ctx, user)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кешируем пользователя
-		if err := r.client.Set(ctx, getUserKey(user.Id), string(encoded), DEFAULT_TTL).Err(); err != nil {
+		// Cache the encoded user
+		if err := r.client.Set(ctx, getUserKey(user.Id), string(encoded), DefaultTTL).Err(); err != nil {
 			return nil, err
 		}
 
 		return user, nil
+	} else if err != nil { // Handle other errors from cache retrieval
+		return nil, err
 	}
 
-	// Декорируем строку в структуру
+	// Decode the cached value into a user struct
 	user := User{}
-
 	if err := json.Unmarshal(encoded, &user); err != nil {
 		return nil, err
 	}
 
-	// Обновляем время кэша
-	if err := r.client.Expire(ctx, getUserKey(userId), DEFAULT_TTL).Err(); err != nil {
+	// Refresh cache expiration time
+	if err := r.client.Expire(ctx, getUserKey(userId), DefaultTTL).Err(); err != nil {
 		return nil, err
 	}
 
@@ -76,75 +71,80 @@ func (r *RepositoryCache) Fetch(ctx context.Context, userId uuid.UUID) (*User, e
 }
 
 func (r *RepositoryCache) FetchLogin(ctx context.Context, login string) (*User, error) {
-	// Проверяем существует ли пользователь в кэше
-	exists := true
-
-	// Преобразуем логин в нижний регистр
+	// Convert login to lowercase for consistency
 	login = strings.ToLower(login)
 
+	// Attempt to fetch user from cache by login
 	encoded, err := r.client.Get(ctx, getUserLoginKey(login)).Bytes()
-	if err == redis.Nil {
-		exists = false
-	} else if err != nil {
-		return nil, err
-	}
 
-	// Если его нет в кэше, то берем информацию из БД и добавляем в кэш
-	if !exists {
-		// Получаем пользователя из БД
+	// If the key doesn't exist in cache
+	if err == redis.Nil {
+		// Fetch the user from the database by login
 		user, err := r.repo.FetchLogin(ctx, login)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кодируем структуру в строку
+		// Encode the user struct to JSON
 		encoded, err := json.MarshalContext(ctx, user)
 		if err != nil {
 			return nil, err
 		}
 
-		// Кешируем пользователя
-		if err := r.client.Set(ctx, getUserLoginKey(user.Login), string(encoded), DEFAULT_TTL).Err(); err != nil {
+		// Cache the encoded user
+		if err := r.client.Set(ctx, getUserLoginKey(user.Login), string(encoded), DefaultTTL).Err(); err != nil {
 			return nil, err
 		}
 
 		return user, nil
+	} else if err != nil { // Handle other errors from cache retrieval
+		return nil, err
 	}
 
-	// Декорируем строку в структуру
+	// Decode the cached value into a user struct
 	user := User{}
-
 	if err := json.Unmarshal(encoded, &user); err != nil {
 		return nil, err
 	}
 
-	// Обновляем время кэша
-	if err := r.client.Expire(ctx, getUserLoginKey(user.Login), DEFAULT_TTL).Err(); err != nil {
+	// Refresh cache expiration time
+	if err := r.client.Expire(ctx, getUserLoginKey(user.Login), DefaultTTL).Err(); err != nil {
 		return nil, err
 	}
 
 	return &user, nil
 }
 
+// Update updates the user in the database and invalidates the cache for that user.
 func (r *RepositoryCache) Update(ctx context.Context, user *User) error {
-	// Обновляем данные пользователя в БД
+	// Fetch the current user data (mainly to get the login for cache invalidation)
+	u, err := r.Fetch(ctx, user.Id)
+	if err != nil {
+		return err
+	}
+
+	// Update user data in the database
 	if err := r.repo.Update(ctx, user); err != nil {
 		return err
 	}
 
-	// Удаляем данные из кэша
-	return r.client.Del(ctx, getUserKey(user.Id)).Err()
+	// Invalidate the user's cache by ID and login
+	return r.client.Del(ctx, getUserKey(u.Id), getUserLoginKey(u.Login)).Err()
 }
 
+// Delete removes the user from the database and invalidates the cache for that user.
 func (r *RepositoryCache) Delete(ctx context.Context, userId uuid.UUID) error {
+	// Fetch the user (mainly to get the login for cache invalidation)
 	u, err := r.Fetch(ctx, userId)
 	if err != nil {
 		return err
 	}
 
+	// Delete the user from the database
 	if err := r.repo.Delete(ctx, userId); err != nil {
 		return err
 	}
 
+	// Invalidate the user's cache by ID and login
 	return r.client.Del(ctx, getUserKey(userId), getUserLoginKey(u.Login)).Err()
 }

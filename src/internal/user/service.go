@@ -3,7 +3,6 @@ package user
 import (
 	"crypto/sha512"
 	"encoding/base64"
-	"fmt"
 	"notes-manager/src/pkg/generator"
 	"strings"
 	"time"
@@ -11,43 +10,61 @@ import (
 	"github.com/google/uuid"
 )
 
+// getUserLoginKey generates a cache key for the user based on the login.
 func getUserLoginKey(login string) string {
-	return fmt.Sprintf("ns:users:login:%s", login)
+	return userLoginKeyBase + strings.ToLower(login)
 }
 
+// getUserKey generates a cache key for the user based on the user's ID.
 func getUserKey(userId uuid.UUID) string {
-	return fmt.Sprintf("ns:users:%s", userId)
+	return userKeyBase + userId.String()
 }
 
-func New(login, password string) *User {
-	// Генерируем соль для пароля
+// generateHashedPassword returns the hashed version of the password using SHA-512 and the provided salt.
+func generateHashedPassword(password, salt string) (string, error) {
+	hasher := sha512.New()
+	_, err := hasher.Write([]byte(password + salt))
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// New creates a new user instance with the provided login and password.
+// It generates a salt, hashes the password with the salt, and sets default values for the user.
+func New(login, password string) (*User, error) {
+	// Generate a salt for password hashing
 	salt := generator.GenerateString(8)
 
-	// Хешируем пароль
-	hasher := sha512.New()
-	hasher.Write([]byte(password + salt))
-	hashedPassword := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+	// Hash the password using SHA-512
+	hashedPassword, err := generateHashedPassword(password, salt)
+	if err != nil {
+		return nil, err
+	}
 
 	currentTime := time.Now().UTC()
 
 	return &User{
 		Id:           uuid.New(),
 		Login:        strings.ToLower(login),
-		Password:     string(hashedPassword),
+		Password:     hashedPassword,
 		Salt:         salt,
-		Role:         DEFAULT_ROLE,
+		Role:         DefaultRole,
 		RegisteredAt: currentTime,
 		LastLoginAt:  currentTime,
-	}
+	}, nil
 }
 
+// TableName defines the table name for the User model when working with an ORM.
 func (User) TableName() string {
 	return "ns_users"
 }
 
-func (u User) ValidatePassword(password string) bool {
-	hasher := sha512.New()
-	hasher.Write([]byte(password + u.Salt))
-	hashedPassword := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
-	return u.Password == hashedPassword
+// ValidatePassword checks if the provided password matches the hashed password of the user.
+func (u User) ValidatePassword(password string) (bool, error) {
+	hashedPassword, err := generateHashedPassword(password, u.Salt)
+	if err != nil {
+		return false, err
+	}
+	return u.Password == hashedPassword, nil
 }
