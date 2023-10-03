@@ -3,9 +3,15 @@
 The Notes Service is a RESTful API that allows users to perform various operations related to note-taking. It provides endpoints for user authentication and for performing CRUD operations on notes. It also imposes a limit of 30 notes per user.
 
 ## Features
-- [x] Unit tests
-- [x] Integrations tests
-- [x] Swagger
+- [x] Authentication system
+- [x] CRUD system on notes
+- [ ] Share notes with other users
+- [ ] Toggle note visibility (public/private)
+- [ ] View list of public notes
+- [ ] Add notes to personal favorites
+- [ ] Save notes from other users
+- [ ] Ban/unban users
+- [ ] User permissions management system
 
 ## Default User
 - **Login:** admin
