@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_newDatabaseRepo(t *testing.T) {
+func TestNewDatabaseRepo(t *testing.T) {
 	ctx := context.Background()
 
 	postgresqlC, err := dcontainer.NewPostgres(ctx)
