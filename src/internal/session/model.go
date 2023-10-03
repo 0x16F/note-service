@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -18,11 +19,11 @@ type Session struct {
 }
 
 type Repository interface {
-	Create(session *Session) error
-	Delete(sessionId uuid.UUID) error
-	Update(session *Session) error
-	Fetch(sessionId uuid.UUID) (*Session, error)
-	FetchAll(userId uuid.UUID) ([]*Session, error)
+	Create(ctx context.Context, session *Session) error
+	Delete(ctx context.Context, sessionId uuid.UUID) error
+	Update(ctx context.Context, session *Session) error
+	Fetch(ctx context.Context, sessionId uuid.UUID) (*Session, error)
+	FetchAll(ctx context.Context, userId uuid.UUID) ([]*Session, error)
 }
 
 const MAX_SESSIONS = 5

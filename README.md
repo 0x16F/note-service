@@ -24,7 +24,8 @@ The Notes Service is a RESTful API that allows users to perform various operatio
 - Each user can have a maximum of 30 notes.
 
 ## Documentation
-Full API documentation is available on Postman.
+Full API documentation is available on via swagger
+http://localhost:6000/v0/swagger
 
 ## How to Use
 1. **User Registration and Authentication:**

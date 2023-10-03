@@ -8,7 +8,10 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm/logger"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/swagger"
+
+	_ "notes-manager/docs"
 )
 
 func New(repo *repository.Repository) Web {
@@ -30,10 +33,12 @@ func New(repo *repository.Repository) Web {
 }
 
 func (w *web) SetupRoutes() {
-	w.app.Use(logger.New)
+	w.app.Use(logger.New())
 
 	v0 := w.app.Group("/v0")
 	{
+		v0.Get("/swagger/*", swagger.HandlerDefault)
+
 		auth := v0.Group("/auth")
 		{
 			auth.Post("/login", w.routes.Auth.Login)

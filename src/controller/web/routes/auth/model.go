@@ -14,11 +14,11 @@ type Router struct {
 }
 
 type LoginRequest struct {
-	Login    string `json:"login" validate:"required,min=3,max=32,alphanum"`
-	Password string `json:"password" validate:"required,min=8,max=64"`
+	Login    string `json:"login" validate:"required,min=3,max=32,alphanum" example:"login"`
+	Password string `json:"password" validate:"required,min=8,max=64" example:"password"`
 }
 
 type RegisterRequest struct {
-	Login    string `json:"login" validate:"required,min=3,max=32,alphanum"`
-	Password string `json:"password" validate:"required,min=8,max=64"`
+	Login    string `json:"login" validate:"required,min=3,max=32,alphanum" example:"login"`
+	Password string `json:"password" validate:"required,min=8,max=64" example:"password"`
 }

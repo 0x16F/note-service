@@ -21,6 +21,17 @@ func New(repo *repository.Repository) *Router {
 	}
 }
 
+// @Summary      Sign in
+// @Description  sign in account
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request	body	LoginRequest  true  "login params"
+// @Success      200
+// @Failure      400  {object}  responses.Error
+// @Failure      404  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/auth/login [post]
 func (r *Router) Login(c *fiber.Ctx) error {
 	request := LoginRequest{}
 	if err := c.BodyParser(&request); err != nil {
@@ -47,7 +58,7 @@ func (r *Router) Login(c *fiber.Ctx) error {
 
 	s := session.New(u.Id, u.Role)
 
-	if err := r.repo.Sessions.Create(s); err != nil {
+	if err := r.repo.Sessions.Create(c.Context(), s); err != nil {
 		logrus.Error(err)
 		return responses.System("failed to create new session", err)
 	}
@@ -56,15 +67,24 @@ func (r *Router) Login(c *fiber.Ctx) error {
 		Name:     "session-id",
 		Value:    s.Id.String(),
 		Expires:  s.LastActivity.Add(session.SESSION_TTL),
-		Secure:   true,
 		HTTPOnly: true,
 	})
 
 	return nil
 }
 
+// @Summary      Sign up
+// @Description  create an account
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request	body	RegisterRequest  true  "register params"
+// @Success      200
+// @Failure      400  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/auth/register [post]
 func (r *Router) Register(c *fiber.Ctx) error {
-	request := LoginRequest{}
+	request := RegisterRequest{}
 	if err := c.BodyParser(&request); err != nil {
 		return responses.BadRequest("bad json", err.Error())
 	}
@@ -83,12 +103,20 @@ func (r *Router) Register(c *fiber.Ctx) error {
 	return nil
 }
 
+// @Summary      Logout
+// @Description  logout from account and destroy the session
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Success      200
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/auth/logout [post]
 func (r *Router) Logout(c *fiber.Ctx) error {
 	s := r.headers.GetSession(c)
 
-	defer c.ClearCookie("session-id")
+	c.ClearCookie("session-id")
 
-	if err := r.repo.Sessions.Delete(s.SessionId); err != nil {
+	if err := r.repo.Sessions.Delete(c.Context(), s.SessionId); err != nil {
 		if err == session.ErrSessionIsNotExists {
 			return nil
 		}

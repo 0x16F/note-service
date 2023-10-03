@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"notes-manager/src/controller/web/headers"
 	"notes-manager/src/controller/web/responses"
+	"notes-manager/src/internal/session"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,9 +17,9 @@ func (r *Router) IsAuthorized(c *fiber.Ctx) error {
 		return responses.New(http.StatusUnauthorized, "session id is not exists", err.Error())
 	}
 
-	session, err := r.repo.Sessions.Fetch(sessionId)
+	s, err := r.repo.Sessions.Fetch(c.Context(), sessionId)
 	if err != nil {
-		if err == redis.Nil {
+		if err == session.ErrSessionIsNotExists {
 			return responses.New(http.StatusUnauthorized, "session is expired or not exists", err.Error())
 		}
 
@@ -27,14 +27,14 @@ func (r *Router) IsAuthorized(c *fiber.Ctx) error {
 		return responses.System(nil, err.Error())
 	}
 
-	session.UpdateActivity()
+	s.UpdateActivity()
 
-	if err := r.repo.Sessions.Update(session); err != nil {
+	if err := r.repo.Sessions.Update(c.Context(), s); err != nil {
 		logrus.Error(err)
 		return responses.System("failed to update session last activity time", err.Error())
 	}
 
-	headers.SetUser(c, session)
+	headers.SetUser(c, s)
 
 	return c.Next()
 }

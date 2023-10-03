@@ -36,3 +36,7 @@ stop:
 ## make build: команда для создания заданного контейнера проекта
 build:
 	docker-compose -p ${PROJECT} build
+
+# make swag: generating swagger docs files
+swag:
+	swag init -g ./cmd/app/main.go

@@ -1,0 +1,336 @@
+definitions:
+  auth.LoginRequest:
+    properties:
+      login:
+        example: login
+        maxLength: 32
+        minLength: 3
+        type: string
+      password:
+        example: password
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  auth.RegisterRequest:
+    properties:
+      login:
+        example: login
+        maxLength: 32
+        minLength: 3
+        type: string
+      password:
+        example: password
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  note.Note:
+    properties:
+      author_id:
+        example: 07f3c5a1-70ea-4e3f-b9b5-110d29891673
+        type: string
+      content:
+        example: some content
+        type: string
+      created_at:
+        example: "2023-10-03T14:00:00Z"
+        type: string
+      id:
+        example: 6b30e5df-5add-42e1-be60-62b6f98afab1
+        type: string
+      title:
+        example: some title
+        type: string
+      updated_at:
+        example: "2023-10-04T04:20:00Z"
+        type: string
+    type: object
+  notes.CreateNoteRequest:
+    properties:
+      content:
+        example: some content
+        type: string
+      title:
+        example: some title
+        maxLength: 32
+        type: string
+    required:
+    - title
+    type: object
+  notes.NoteResponse:
+    properties:
+      note:
+        $ref: '#/definitions/note.Note'
+    type: object
+  notes.UpdateNoteRequest:
+    properties:
+      content:
+        example: new content
+        type: string
+      note_id:
+        example: 07f3c5a1-70ea-4e3f-b9b5-110d29891673
+        type: string
+      title:
+        example: new title
+        maxLength: 32
+        type: string
+    required:
+    - content
+    - note_id
+    - title
+    type: object
+  notes.UserNotesResponse:
+    properties:
+      notes:
+        items:
+          $ref: '#/definitions/note.Note'
+        type: array
+    type: object
+  responses.Error:
+    properties:
+      code:
+        example: 500
+        type: integer
+      developer: {}
+      message: {}
+    type: object
+info:
+  contact: {}
+  description: Simple server to demonstrate some features
+  title: Notes Service API
+  version: "1.0"
+paths:
+  /v0/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: sign in account
+      parameters:
+      - description: login params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Sign in
+      tags:
+      - auth
+  /v0/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: logout from account and destroy the session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Logout
+      tags:
+      - auth
+  /v0/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: create an account
+      parameters:
+      - description: register params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Sign up
+      tags:
+      - auth
+  /v0/notes:
+    get:
+      consumes:
+      - application/json
+      description: returning all notes of current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notes.UserNotesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Fetch all notes
+      tags:
+      - notes
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: update note params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/notes.UpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notes.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Update note
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: create note params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/notes.CreateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notes.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Create note
+      tags:
+      - notes
+  /v0/notes/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Delete note
+      tags:
+      - notes
+    get:
+      consumes:
+      - application/json
+      description: returning specific note
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notes.NoteResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Fetch note
+      tags:
+      - notes
+swagger: "2.0"

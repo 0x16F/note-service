@@ -27,20 +27,20 @@ func NewRepo(client *redis.Client) Repository {
 	}
 }
 
-func (s *repository) Update(session *Session) error {
-	_, err := s.client.Pipelined(context.Background(), func(p redis.Pipeliner) error {
+func (s *repository) Update(ctx context.Context, session *Session) error {
+	_, err := s.client.Pipelined(ctx, func(p redis.Pipeliner) error {
 		// Обновляем поля сессии
 		if err := session.HSet(p); err != nil {
 			return errors.Join(err, errors.New("failed to update session fields"))
 		}
 
 		// Обновляем время истечения сессии
-		if err := p.Expire(context.Background(), getSessionKey(session.Id), SESSION_TTL).Err(); err != nil {
+		if err := p.Expire(ctx, getSessionKey(session.Id), SESSION_TTL).Err(); err != nil {
 			return errors.Join(err, errors.New("failed to update session expire time"))
 		}
 
 		// Обновляем время истечения списка с сессиями
-		if err := p.Expire(context.Background(), getSessionsKey(session.UserId), SESSION_TTL).Err(); err != nil {
+		if err := p.Expire(ctx, getSessionsKey(session.UserId), SESSION_TTL).Err(); err != nil {
 			return errors.Join(err, errors.New("failed to update sessions list expire time"))
 		}
 
@@ -50,9 +50,9 @@ func (s *repository) Update(session *Session) error {
 	return err
 }
 
-func (s *repository) Create(session *Session) error {
+func (s *repository) Create(ctx context.Context, session *Session) error {
 	// Проверяем кол-во активных сессий пользователя
-	count, err := s.client.LLen(context.Background(), getSessionsKey(session.UserId)).Result()
+	count, err := s.client.LLen(ctx, getSessionsKey(session.UserId)).Result()
 	if err == redis.Nil {
 		count = 0
 	} else if err != nil {
@@ -61,20 +61,20 @@ func (s *repository) Create(session *Session) error {
 
 	// Если количество активных сессий равняется или превышает максимальное значение,
 	// то удаляем сессию, которая не использовалась дольше всего
-	if count >= MAX_SESSIONS {
+	for count >= MAX_SESSIONS {
 		// Получаем наименее активную сессию
-		oldestSessionId, err := s.FetchOldest(session.UserId)
+		oldestSessionId, err := s.FetchOldest(ctx, session.UserId)
 		if err != nil {
 			return errors.Join(err, errors.New("failed to get oldest session"))
 		}
 
 		// Удаляем её из списка сессий пользователя и её саму
-		_, err = s.client.Pipelined(context.Background(), func(p redis.Pipeliner) error {
-			if err := p.LRem(context.Background(), getSessionsKey(session.UserId), 1, oldestSessionId.String()).Err(); err != nil {
+		_, err = s.client.Pipelined(ctx, func(p redis.Pipeliner) error {
+			if err := p.LRem(ctx, getSessionsKey(session.UserId), 1, oldestSessionId.String()).Err(); err != nil {
 				return errors.Join(err, errors.New("failed to delete sessions from user session hashmap"))
 			}
 
-			if err := p.Del(context.Background(), getSessionKey(oldestSessionId)).Err(); err != nil {
+			if err := p.Del(ctx, getSessionKey(oldestSessionId)).Err(); err != nil {
 				return errors.Join(err, errors.New("failed to delete session"))
 			}
 
@@ -84,23 +84,25 @@ func (s *repository) Create(session *Session) error {
 		if err != nil {
 			return err
 		}
+
+		count--
 	}
 
 	// Создаем сессию и добавляем её идентификатор в список сессий пользователя
-	_, err = s.client.Pipelined(context.Background(), func(p redis.Pipeliner) error {
+	_, err = s.client.Pipelined(ctx, func(p redis.Pipeliner) error {
 		if err := session.HSet(p); err != nil {
 			return err
 		}
 
-		if err := p.Expire(context.Background(), getSessionKey(session.Id), SESSION_TTL).Err(); err != nil {
+		if err := p.Expire(ctx, getSessionKey(session.Id), SESSION_TTL).Err(); err != nil {
 			return errors.Join(err, errors.New("failed to set expire on session"))
 		}
 
-		if err := p.LPush(context.Background(), getSessionsKey(session.UserId), session.Id.String()).Err(); err != nil {
+		if err := p.LPush(ctx, getSessionsKey(session.UserId), session.Id.String()).Err(); err != nil {
 			return errors.Join(err, errors.New("failed to add session is user sessions list"))
 		}
 
-		if err := p.Expire(context.Background(), getSessionsKey(session.UserId), SESSION_TTL).Err(); err != nil {
+		if err := p.Expire(ctx, getSessionsKey(session.UserId), SESSION_TTL).Err(); err != nil {
 			return errors.Join(err, errors.New("failed to set expire on session"))
 		}
 
@@ -110,35 +112,45 @@ func (s *repository) Create(session *Session) error {
 	return err
 }
 
-func (s *repository) Delete(sessionId uuid.UUID) error {
-	_, err := s.client.Pipelined(context.Background(), func(p redis.Pipeliner) error {
-		session, err := s.Fetch(sessionId)
+func (s *repository) Delete(ctx context.Context, sessionId uuid.UUID) error {
+	_, err := s.client.Pipelined(ctx, func(p redis.Pipeliner) error {
+		session, err := s.Fetch(ctx, sessionId)
 		if err != nil {
 			return ErrSessionIsNotExists
 		}
 
-		if err := p.LRem(context.Background(), getSessionsKey(session.UserId), 1, session.Id.String()).Err(); err != nil {
+		if err := p.LRem(ctx, getSessionsKey(session.UserId), 1, session.Id.String()).Err(); err != nil {
 			return err
 		}
 
-		return p.Del(context.TODO(), getSessionKey(session.Id)).Err()
+		return p.Del(ctx, getSessionKey(session.Id)).Err()
 	})
 
 	return err
 }
 
-func (s *repository) Fetch(sessionId uuid.UUID) (*Session, error) {
+func (s *repository) Fetch(ctx context.Context, sessionId uuid.UUID) (*Session, error) {
 	session := Session{}
 
-	if err := s.client.HGetAll(context.TODO(), getSessionKey(sessionId)).Scan(&session); err != nil {
+	result := s.client.HGetAll(ctx, getSessionKey(sessionId))
+
+	if m, err := result.Result(); err != nil || len(m) == 0 {
+		if err == nil {
+			return nil, ErrSessionIsNotExists
+		}
+
+		return nil, err
+	}
+
+	if err := result.Scan(&session); err != nil {
 		return nil, err
 	}
 
 	return &session, nil
 }
 
-func (s *repository) FetchOldest(userId uuid.UUID) (uuid.UUID, error) {
-	sessionsIds, err := s.client.LRange(context.Background(), getSessionsKey(userId), 0, MAX_SESSIONS-1).Result()
+func (s *repository) FetchOldest(ctx context.Context, userId uuid.UUID) (uuid.UUID, error) {
+	sessionsIds, err := s.client.LRange(ctx, getSessionsKey(userId), 0, MAX_SESSIONS-1).Result()
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -152,9 +164,9 @@ func (s *repository) FetchOldest(userId uuid.UUID) (uuid.UUID, error) {
 			return uuid.Nil, err
 		}
 
-		lastActivity, err := s.client.HGet(context.Background(), getSessionKey(id), "last_activity").Time()
+		lastActivity, err := s.client.HGet(ctx, getSessionKey(id), "last_activity").Time()
 		if err == redis.Nil {
-			if err := s.client.Del(context.Background(), getSessionKey(id)).Err(); err != nil {
+			if err := s.client.Del(ctx, getSessionKey(id)).Err(); err != nil {
 				return uuid.Nil, err
 			}
 		} else if err != nil {
@@ -170,8 +182,8 @@ func (s *repository) FetchOldest(userId uuid.UUID) (uuid.UUID, error) {
 	return oldestSessionId, nil
 }
 
-func (s *repository) FetchAll(userId uuid.UUID) ([]*Session, error) {
-	sessionsIds, err := s.client.LRange(context.Background(), getSessionsKey(userId), 0, MAX_SESSIONS-1).Result()
+func (s *repository) FetchAll(ctx context.Context, userId uuid.UUID) ([]*Session, error) {
+	sessionsIds, err := s.client.LRange(ctx, getSessionsKey(userId), 0, MAX_SESSIONS-1).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -184,9 +196,9 @@ func (s *repository) FetchAll(userId uuid.UUID) ([]*Session, error) {
 			return nil, err
 		}
 
-		session, err := s.Fetch(id)
+		session, err := s.Fetch(ctx, id)
 		if err == redis.Nil {
-			if err := s.client.LRem(context.Background(), getSessionsKey(userId), 1, sessionId).Err(); err != nil {
+			if err := s.client.LRem(ctx, getSessionsKey(userId), 1, sessionId).Err(); err != nil {
 				return nil, err
 			}
 

@@ -22,6 +22,14 @@ func New(repo *repository.Repository) *Router {
 	}
 }
 
+// @Summary      Fetch all notes
+// @Description  returning all notes of current user
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  UserNotesResponse
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/notes [get]
 func (r *Router) FetchAll(c *fiber.Ctx) error {
 	s := r.headers.GetSession(c)
 
@@ -31,11 +39,22 @@ func (r *Router) FetchAll(c *fiber.Ctx) error {
 		return responses.System("failed to fetch notes", err.Error())
 	}
 
-	return c.JSON(fiber.Map{
-		"notes": notes,
+	return c.JSON(&UserNotesResponse{
+		Notes: notes,
 	})
 }
 
+// @Summary      Fetch note
+// @Description  returning specific note
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Param		 id   path		string true "Note ID"
+// @Success      200  {object}  NoteResponse
+// @Failure      403  {object}  responses.Error
+// @Failure      404  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/notes/{id} [get]
 func (r *Router) Fetch(c *fiber.Ctx) error {
 	noteId, err := uuid.Parse(c.Params("note_id"))
 	if err != nil {
@@ -58,11 +77,20 @@ func (r *Router) Fetch(c *fiber.Ctx) error {
 		return responses.New(http.StatusForbidden, "you don't have enough permissions to see this note", nil)
 	}
 
-	return c.JSON(fiber.Map{
-		"note": n,
+	return c.JSON(&NoteResponse{
+		Note: n,
 	})
 }
 
+// @Summary      Create note
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Param        request	body	CreateNoteRequest  true  "create note params"
+// @Success      200  {object}  NoteResponse
+// @Failure      400  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/notes [post]
 func (r *Router) Create(c *fiber.Ctx) error {
 	request := CreateNoteRequest{}
 	if err := c.BodyParser(&request); err != nil {
@@ -80,11 +108,22 @@ func (r *Router) Create(c *fiber.Ctx) error {
 		return responses.System("failed to create new note", err.Error())
 	}
 
-	return c.JSON(fiber.Map{
-		"note": n,
+	return c.JSON(&NoteResponse{
+		Note: n,
 	})
 }
 
+// @Summary      Delete note
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Param		 id   path		string true "Note ID"
+// @Success      200
+// @Failure      400  {object}  responses.Error
+// @Failure      403  {object}  responses.Error
+// @Failure      404  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/notes/{id} [delete]
 func (r *Router) Delete(c *fiber.Ctx) error {
 	noteId, err := uuid.Parse(c.Params("note_id"))
 	if err != nil {
@@ -115,6 +154,17 @@ func (r *Router) Delete(c *fiber.Ctx) error {
 	return nil
 }
 
+// @Summary      Update note
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Param        request	body	UpdateNoteRequest  true  "update note params"
+// @Success      200  {object}  NoteResponse
+// @Failure      400  {object}  responses.Error
+// @Failure      403  {object}  responses.Error
+// @Failure      404  {object}  responses.Error
+// @Failure      500  {object}  responses.Error
+// @Router       /v0/notes [patch]
 func (r *Router) Update(c *fiber.Ctx) error {
 	request := UpdateNoteRequest{}
 	if err := c.BodyParser(&request); err != nil {

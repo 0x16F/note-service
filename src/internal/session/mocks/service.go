@@ -5,6 +5,7 @@
 package mock_session
 
 import (
+	context "context"
 	session "notes-manager/src/internal/session"
 	reflect "reflect"
 
@@ -36,73 +37,73 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockRepository) Create(session *session.Session) error {
+func (m *MockRepository) Create(ctx context.Context, session *session.Session) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", session)
+	ret := m.ctrl.Call(m, "Create", ctx, session)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockRepositoryMockRecorder) Create(session interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Create(ctx, session interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), session)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), ctx, session)
 }
 
 // Delete mocks base method.
-func (m *MockRepository) Delete(sessionId uuid.UUID) error {
+func (m *MockRepository) Delete(ctx context.Context, sessionId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", sessionId)
+	ret := m.ctrl.Call(m, "Delete", ctx, sessionId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockRepositoryMockRecorder) Delete(sessionId interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Delete(ctx, sessionId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), sessionId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, sessionId)
 }
 
 // Fetch mocks base method.
-func (m *MockRepository) Fetch(sessionId uuid.UUID) (*session.Session, error) {
+func (m *MockRepository) Fetch(ctx context.Context, sessionId uuid.UUID) (*session.Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Fetch", sessionId)
+	ret := m.ctrl.Call(m, "Fetch", ctx, sessionId)
 	ret0, _ := ret[0].(*session.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Fetch indicates an expected call of Fetch.
-func (mr *MockRepositoryMockRecorder) Fetch(sessionId interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Fetch(ctx, sessionId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockRepository)(nil).Fetch), sessionId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockRepository)(nil).Fetch), ctx, sessionId)
 }
 
 // FetchAll mocks base method.
-func (m *MockRepository) FetchAll(userId uuid.UUID) ([]*session.Session, error) {
+func (m *MockRepository) FetchAll(ctx context.Context, userId uuid.UUID) ([]*session.Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAll", userId)
+	ret := m.ctrl.Call(m, "FetchAll", ctx, userId)
 	ret0, _ := ret[0].([]*session.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchAll indicates an expected call of FetchAll.
-func (mr *MockRepositoryMockRecorder) FetchAll(userId interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) FetchAll(ctx, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAll", reflect.TypeOf((*MockRepository)(nil).FetchAll), userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAll", reflect.TypeOf((*MockRepository)(nil).FetchAll), ctx, userId)
 }
 
 // Update mocks base method.
-func (m *MockRepository) Update(session *session.Session) error {
+func (m *MockRepository) Update(ctx context.Context, session *session.Session) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", session)
+	ret := m.ctrl.Call(m, "Update", ctx, session)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockRepositoryMockRecorder) Update(session interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Update(ctx, session interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), session)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), ctx, session)
 }

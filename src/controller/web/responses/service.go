@@ -40,15 +40,21 @@ func CustomErrorHandler() func(c *fiber.Ctx, err error) error {
 	return func(c *fiber.Ctx, err error) error {
 		code := fiber.StatusInternalServerError
 
-		cErr := Error{}
-		if err := json.Unmarshal([]byte(err.Error()), &cErr); err != nil {
+		switch err.(type) {
+		case *fiber.Error:
+			code = fiber.StatusNotFound
+			return c.Status(code).SendString(New(code, "Page not found", nil).Error())
+		default:
+			cErr := Error{}
+			if err := json.Unmarshal([]byte(err.Error()), &cErr); err != nil {
+				return c.Status(code).SendString(err.Error())
+			}
+
+			code = cErr.Code
+
+			c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
+
 			return c.Status(code).SendString(err.Error())
 		}
-
-		code = cErr.Code
-
-		c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
-
-		return c.Status(code).SendString(err.Error())
 	}
 }

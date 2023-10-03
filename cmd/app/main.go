@@ -2,14 +2,20 @@ package main
 
 import (
 	"notes-manager/src/controller/web"
+	"notes-manager/src/pkg/fsscanner"
 	"notes-manager/src/pkg/migrate"
 	"notes-manager/src/usecase/config"
 	"notes-manager/src/usecase/repository"
 	"notes-manager/src/usecase/repository/pgconnector"
 	"notes-manager/src/usecase/repository/rsconnector"
+	"os"
 
 	"github.com/sirupsen/logrus"
 )
+
+// @title Notes Service API
+// @version 1.0
+// @description Simple server to demonstrate some features
 
 func main() {
 	// init config
@@ -33,8 +39,17 @@ func main() {
 	// init repo
 	repo := repository.New(db, client)
 
+	// getting current path to the current folder
+	wd, _ := os.Getwd()
+
+	// getting path to the migrations
+	migrationsPath, err := fsscanner.FindDirectory(wd, "migrations")
+	if err != nil {
+		logrus.Fatal("failed to find migrations folder")
+	}
+
 	// apply migrations
-	if err := migrate.ApplyMigrations(&cfg.Database, false, "file://migrations"); err != nil {
+	if err := migrate.ApplyMigrations(&cfg.Database, false, "file://"+migrationsPath); err != nil {
 		logrus.Fatalf("failed to apply migrations, %v", err)
 	}
 
