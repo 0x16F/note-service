@@ -2,6 +2,11 @@
 
 The Notes Service is a RESTful API that allows users to perform various operations related to note-taking. It provides endpoints for user authentication and for performing CRUD operations on notes. It also imposes a limit of 30 notes per user.
 
+## Features
+- [x] Unit tests
+- [x] Integrations tests
+- [x] Swagger
+
 ## Default User
 - **Login:** admin
 - **Password:** qwerty12
@@ -24,7 +29,7 @@ The Notes Service is a RESTful API that allows users to perform various operatio
 - Each user can have a maximum of 30 notes.
 
 ## Documentation
-Full API documentation is available on via swagger
+Full API documentation is available via swagger
 http://localhost:6000/v0/swagger
 
 ## How to Use
