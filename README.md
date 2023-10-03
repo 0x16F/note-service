@@ -11,20 +11,6 @@ The Notes Service is a RESTful API that allows users to perform various operatio
 - **Login:** admin
 - **Password:** qwerty12
 
-## Routes
-
-### Authentication Routes
-- **POST /v0/auth/login**: Authenticates a user.
-- **POST /v0/auth/register**: Registers a new user.
-- **POST /v0/auth/logout**: Logs out an authenticated user.
-
-### Notes Routes
-- **GET /v0/notes**: Fetches all notes of the authenticated user.
-- **GET /v0/notes/:note_id**: Fetches a specific note of the authenticated user.
-- **DELETE /v0/notes/:note_id**: Deletes a specific note of the authenticated user.
-- **POST /v0/notes**: Creates a new note.
-- **PATCH /v0/notes**: Updates an existing note.
-
 ## Limitations
 - Each user can have a maximum of 30 notes.
 
