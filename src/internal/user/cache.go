@@ -47,7 +47,7 @@ func (r *RepositoryCache) Fetch(ctx context.Context, userId uuid.UUID) (*User, e
 		}
 
 		// Cache the encoded user
-		if err := r.client.Set(ctx, getUserKey(user.Id), string(encoded), DefaultTTL).Err(); err != nil {
+		if err := r.client.Set(ctx, getUserKey(user.Id), string(encoded), defaultTTL).Err(); err != nil {
 			return nil, err
 		}
 
@@ -63,7 +63,7 @@ func (r *RepositoryCache) Fetch(ctx context.Context, userId uuid.UUID) (*User, e
 	}
 
 	// Refresh cache expiration time
-	if err := r.client.Expire(ctx, getUserKey(userId), DefaultTTL).Err(); err != nil {
+	if err := r.client.Expire(ctx, getUserKey(userId), defaultTTL).Err(); err != nil {
 		return nil, err
 	}
 
@@ -92,7 +92,7 @@ func (r *RepositoryCache) FetchLogin(ctx context.Context, login string) (*User, 
 		}
 
 		// Cache the encoded user
-		if err := r.client.Set(ctx, getUserLoginKey(user.Login), string(encoded), DefaultTTL).Err(); err != nil {
+		if err := r.client.Set(ctx, getUserLoginKey(user.Login), string(encoded), defaultTTL).Err(); err != nil {
 			return nil, err
 		}
 
@@ -108,7 +108,7 @@ func (r *RepositoryCache) FetchLogin(ctx context.Context, login string) (*User, 
 	}
 
 	// Refresh cache expiration time
-	if err := r.client.Expire(ctx, getUserLoginKey(user.Login), DefaultTTL).Err(); err != nil {
+	if err := r.client.Expire(ctx, getUserLoginKey(user.Login), defaultTTL).Err(); err != nil {
 		return nil, err
 	}
 

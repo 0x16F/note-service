@@ -10,7 +10,11 @@ import (
 
 //go:generate mockgen -source=model.go -destination=mocks/service.go
 
-const DEFAULT_TTL = time.Hour
+const (
+	notesUserIdKeyBase = "ns:notes:users:"
+	notesKeyBase       = "ns:notes:"
+	defaultTTL         = time.Hour
+)
 
 type Note struct {
 	Id        uuid.UUID `json:"id" gorm:"column:id" example:"6b30e5df-5add-42e1-be60-62b6f98afab1"`
@@ -28,12 +32,13 @@ type NoteDTO struct {
 	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at"`
 }
 
+// Repository defines the interface for note-related operations.
 type Repository interface {
-	Create(ctx context.Context, note *Note) error
-	Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error)
-	FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error)
-	Delete(ctx context.Context, noteId uuid.UUID) error
-	Update(ctx context.Context, note *NoteDTO) error
+	Create(ctx context.Context, note *Note) error                    // Create adds a new note.
+	Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error)      // Fetch retrieves a note by its ID.
+	FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error) // FetchAll retrieves all notes of a specific user.
+	Delete(ctx context.Context, noteId uuid.UUID) error              // Delete removes a note by its ID.
+	Update(ctx context.Context, note *NoteDTO) error                 // Update modifies a note using a NoteDTO.
 }
 
 var ErrNoteIsNotExists = errors.New("note is not exists")

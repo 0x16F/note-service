@@ -13,7 +13,7 @@ import (
 const (
 	userLoginKeyBase = "ns:users:login:"
 	userKeyBase      = "ns:users:"
-	DefaultTTL       = time.Hour
+	defaultTTL       = time.Hour
 	DefaultRole      = "user"
 )
 
@@ -27,12 +27,13 @@ type User struct {
 	LastLoginAt  time.Time `json:"last_login_at" gorm:"column:last_login_at"`
 }
 
+// Repository defines the interface for user-related operations.
 type Repository interface {
-	Create(ctx context.Context, user *User) error
-	Fetch(ctx context.Context, userId uuid.UUID) (*User, error)
-	FetchLogin(ctx context.Context, login string) (*User, error)
-	Update(ctx context.Context, user *User) error
-	Delete(ctx context.Context, userId uuid.UUID) error
+	Create(ctx context.Context, user *User) error                // Create adds a new user.
+	Fetch(ctx context.Context, userId uuid.UUID) (*User, error)  // Fetch retrieves a user by their ID.
+	FetchLogin(ctx context.Context, login string) (*User, error) // FetchLogin retrieves a user by their login.
+	Update(ctx context.Context, user *User) error                // Update modifies an existing user.
+	Delete(ctx context.Context, userId uuid.UUID) error          // Delete removes a user by their ID.
 }
 
 var ErrUserIsNotExists = errors.New("user is not exists")
