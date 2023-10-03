@@ -21,8 +21,7 @@ http://localhost:6000/v0/swagger
 ## How to Use
 1. **User Registration and Authentication:**
    - Register a new user using the `/v0/auth/register` endpoint.
-   - Authenticate using the `/v0/auth/login` endpoint to get the token.
-   - Use this token in the `Authorization` header for subsequent requests.
+   - Authenticate using the `/v0/auth/login` endpoint to sign in.
 
 2. **Creating and Managing Notes:**
    - Use the `/v0/notes` endpoint to create, update, fetch, or delete notes.
