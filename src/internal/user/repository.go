@@ -51,5 +51,9 @@ func (r *RepositoryDB) FetchLogin(ctx context.Context, login string) (*User, err
 }
 
 func (r *RepositoryDB) Update(ctx context.Context, user *User) error {
-	return r.db.WithContext(ctx).Model(&User{}).Updates(user).Error
+	return r.db.WithContext(ctx).Save(user).Error
+}
+
+func (r *RepositoryDB) Delete(ctx context.Context, userId uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&User{}).Where("id = $1", userId.String()).Delete(nil).Error
 }

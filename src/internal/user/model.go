@@ -28,6 +28,7 @@ type Repository interface {
 	Fetch(ctx context.Context, userId uuid.UUID) (*User, error)
 	FetchLogin(ctx context.Context, login string) (*User, error)
 	Update(ctx context.Context, user *User) error
+	Delete(ctx context.Context, userId uuid.UUID) error
 }
 
 var ErrUserIsNotExists = errors.New("user is not exists")

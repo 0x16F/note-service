@@ -135,3 +135,16 @@ func (r *RepositoryCache) Update(ctx context.Context, user *User) error {
 	// Удаляем данные из кэша
 	return r.client.Del(ctx, getUserKey(user.Id)).Err()
 }
+
+func (r *RepositoryCache) Delete(ctx context.Context, userId uuid.UUID) error {
+	u, err := r.Fetch(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	if err := r.repo.Delete(ctx, userId); err != nil {
+		return err
+	}
+
+	return r.client.Del(ctx, getUserKey(userId), getUserLoginKey(u.Login)).Err()
+}
