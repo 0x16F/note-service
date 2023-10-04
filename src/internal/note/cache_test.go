@@ -24,7 +24,7 @@ func setupC(t *testing.T) (Repository, *Note, context.Context) {
 
 	require.NoError(t, uRepo.Create(ctx, u))
 
-	return repo, New(u.Id, "my note", "my content"), ctx
+	return repo, New(u.Id, "my note", "my content", true), ctx
 }
 
 func TestCreateFetch(t *testing.T) {
@@ -55,6 +55,7 @@ func TestUpdate(t *testing.T) {
 		Title:     "new title",
 		Content:   "new content",
 		UpdatedAt: time.Now().UTC(),
+		IsPrivate: false,
 	}
 
 	require.NoError(t, repo.Update(ctx, &dto))

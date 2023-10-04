@@ -423,6 +423,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "6b30e5df-5add-42e1-be60-62b6f98afab1"
                 },
+                "is_private": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "title": {
                     "type": "string",
                     "example": "some title"
@@ -469,6 +473,10 @@ const docTemplate = `{
                 "content": {
                     "type": "string",
                     "example": "new content"
+                },
+                "is_private": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "note_id": {
                     "type": "string",

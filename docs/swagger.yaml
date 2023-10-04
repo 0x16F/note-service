@@ -45,6 +45,9 @@ definitions:
       id:
         example: 6b30e5df-5add-42e1-be60-62b6f98afab1
         type: string
+      is_private:
+        example: true
+        type: boolean
       title:
         example: some title
         type: string
@@ -74,6 +77,9 @@ definitions:
       content:
         example: new content
         type: string
+      is_private:
+        example: false
+        type: boolean
       note_id:
         example: 07f3c5a1-70ea-4e3f-b9b5-110d29891673
         type: string

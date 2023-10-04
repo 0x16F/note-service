@@ -102,7 +102,7 @@ func (r *Router) Create(c *fiber.Ctx) error {
 	}
 
 	s := r.headers.GetSession(c)
-	n := note.New(s.UserId, request.Title, request.Content)
+	n := note.New(s.UserId, request.Title, request.Content, true)
 
 	if err := r.repo.Notes.Create(c.Context(), n); err != nil {
 		return responses.System("failed to create new note", err.Error())
@@ -196,6 +196,7 @@ func (r *Router) Update(c *fiber.Ctx) error {
 		Title:     request.Title,
 		Content:   request.Content,
 		UpdatedAt: time.Now().UTC(),
+		IsPrivate: request.IsPrivate,
 	}
 
 	if err := r.repo.Notes.Update(c.Context(), &dto); err != nil {
@@ -203,5 +204,17 @@ func (r *Router) Update(c *fiber.Ctx) error {
 		return responses.System("failed to update note", err.Error())
 	}
 
-	return nil
+	n, err = r.repo.Notes.Fetch(c.Context(), request.NoteId)
+	if err != nil {
+		if err == note.ErrNoteIsNotExists {
+			return responses.New(http.StatusNotFound, "note is not exists", err.Error())
+		}
+
+		logrus.Error(err)
+		return responses.System("failed to fetch note", err.Error())
+	}
+
+	return c.JSON(&NoteResponse{
+		Note: n,
+	})
 }

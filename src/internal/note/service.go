@@ -9,16 +9,16 @@ import (
 
 // getNoteKey generates a unique cache key for a specific note based on its ID.
 func getNoteKey(noteId uuid.UUID) string {
-	return fmt.Sprintf("%s:%s", notesKeyBase, noteId)
+	return fmt.Sprint(notesKeyBase, noteId)
 }
 
 // getNotesKey generates a unique cache key for all notes of a specific user based on their ID.
 func getNotesKey(userId uuid.UUID) string {
-	return fmt.Sprintf("%s:%s", notesUserIdKeyBase, userId)
+	return fmt.Sprint(notesUserIdKeyBase, userId)
 }
 
 // New initializes a new Note instance with the provided details and sets the creation and update times to the current UTC time.
-func New(authorId uuid.UUID, title string, content string) *Note {
+func New(authorId uuid.UUID, title string, content string, isPrivate bool) *Note {
 	currentTime := time.Now().UTC()
 
 	return &Note{
@@ -28,6 +28,7 @@ func New(authorId uuid.UUID, title string, content string) *Note {
 		Content:   content,
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
+		IsPrivate: isPrivate,
 	}
 }
 

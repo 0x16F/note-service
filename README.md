@@ -6,7 +6,7 @@ The Notes Service is a RESTful API that allows users to perform various operatio
 - [x] Authentication system
 - [x] CRUD system on notes
 - [ ] Share notes with other users
-- [ ] Toggle note visibility (public/private)
+- [x] Toggle note visibility (public/private)
 - [ ] View list of public notes
 - [ ] Add notes to personal favorites
 - [ ] Save notes from other users

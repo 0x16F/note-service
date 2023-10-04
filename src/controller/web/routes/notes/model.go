@@ -21,9 +21,10 @@ type CreateNoteRequest struct {
 }
 
 type UpdateNoteRequest struct {
-	NoteId  uuid.UUID `json:"note_id" validate:"required" example:"07f3c5a1-70ea-4e3f-b9b5-110d29891673"`
-	Title   string    `json:"title" validate:"required,max=32" example:"new title"`
-	Content string    `json:"content" validate:"required" example:"new content"`
+	NoteId    uuid.UUID `json:"note_id" validate:"required" example:"07f3c5a1-70ea-4e3f-b9b5-110d29891673"`
+	Title     string    `json:"title" validate:"required,max=32" example:"new title"`
+	Content   string    `json:"content" validate:"required" example:"new content"`
+	IsPrivate bool      `json:"is_private" example:"false"`
 }
 
 type UserNotesResponse struct {

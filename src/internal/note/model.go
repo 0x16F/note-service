@@ -23,12 +23,14 @@ type Note struct {
 	Content   string    `json:"content" gorm:"column:content" example:"some content"`
 	CreatedAt time.Time `json:"created_at" gorm:"column:created_at" example:"2023-10-03T14:00:00Z"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at" example:"2023-10-04T04:20:00Z"`
+	IsPrivate bool      `json:"is_private" gorm:"column:is_private" example:"true"`
 }
 
 type NoteDTO struct {
 	Id        uuid.UUID `json:"id" gorm:"column:id;primaryKey"`
 	Title     string    `json:"title" gorm:"column:title"`
 	Content   string    `json:"content" gorm:"column:content"`
+	IsPrivate bool      `json:"is_private" gorm:"column:is_private" example:"true"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at"`
 }
 

@@ -1,4 +1,4 @@
 .vscode
 postgres_data
 redis_data
-__debug_bin%
+__debug_bin*

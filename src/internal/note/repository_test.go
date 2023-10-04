@@ -24,7 +24,7 @@ func setupR(t *testing.T) (Repository, *Note, context.Context) {
 	err = uRepo.Create(ctx, u)
 	require.NoError(t, err)
 
-	return repo, New(u.Id, "my note", "my content"), ctx
+	return repo, New(u.Id, "my note", "my content", true), ctx
 }
 
 func TestNoteFetchingNonExisting(t *testing.T) {
