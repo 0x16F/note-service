@@ -115,6 +115,13 @@ func (r *RepositoryCache) FetchAll(ctx context.Context, userId uuid.UUID) ([]*No
 	return notes, nil
 }
 
+// FetchPublic retrieves all public notes from the database.
+func (r *RepositoryCache) FetchPublic(ctx context.Context, page int, limit int) ([]*Note, int64, error) {
+	// TODO cache
+
+	return r.repo.FetchPublic(ctx, page, limit)
+}
+
 // Delete removes a note by its ID and invalidates the cache for the note and the author's notes.
 func (r *RepositoryCache) Delete(ctx context.Context, noteId uuid.UUID) error {
 	note, err := r.Fetch(ctx, noteId)

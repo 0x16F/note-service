@@ -27,8 +27,15 @@ type UpdateNoteRequest struct {
 	IsPrivate bool      `json:"is_private" example:"false"`
 }
 
+type FetchAllParams struct {
+	Public  bool `query:"public"`
+	PerPage int  `query:"per_page" validate:"min=1,max=50"`
+	Page    int  `query:"page" validate:"min=1"`
+}
+
 type UserNotesResponse struct {
 	Notes []*note.Note `json:"notes"`
+	Pages int64        `json:"pages,omitempty"`
 }
 
 type NoteResponse struct {

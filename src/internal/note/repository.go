@@ -49,6 +49,30 @@ func (r *RepositoryDB) FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note,
 	return notes, nil
 }
 
+// FetchPublic retrieves all public notes, and count of elements from the database.
+func (r *RepositoryDB) FetchPublic(ctx context.Context, page int, limit int) ([]*Note, int64, error) {
+	notes := make([]*Note, 0)
+	offset := 0
+
+	if page == 1 {
+		page = 0
+		offset = 0
+	} else {
+		offset = page * limit
+	}
+
+	var count int64 = 0
+	if err := r.db.WithContext(ctx).Model(&Note{}).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.WithContext(ctx).Model(&Note{}).Limit(limit).Offset(offset).Scan(&notes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return notes, count, nil
+}
+
 // Delete removes a note by its ID from the database.
 func (r *RepositoryDB) Delete(ctx context.Context, noteId uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&Note{}).Where("id = $1", noteId.String()).Delete(nil).Error

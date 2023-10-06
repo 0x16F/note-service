@@ -85,3 +85,19 @@ func TestNoteDelete(t *testing.T) {
 	require.Nil(t, fetchedNote)
 	require.NotNil(t, err)
 }
+
+func TestNoteFetchPublic(t *testing.T) {
+	repo, n, ctx := setupR(t)
+
+	n.IsPrivate = false
+
+	newNote := New(n.AuthorId, "title", "content", false)
+
+	require.NoError(t, repo.Create(ctx, n))
+	require.NoError(t, repo.Create(ctx, newNote))
+
+	fetchedNote, count, err := repo.FetchPublic(ctx, 1, 50)
+	require.NotNil(t, fetchedNote)
+	require.Nil(t, err)
+	require.Equal(t, int64(2), count)
+}

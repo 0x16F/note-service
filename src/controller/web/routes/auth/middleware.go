@@ -24,7 +24,7 @@ func (r *Router) IsAuthorized(c *fiber.Ctx) error {
 		}
 
 		logrus.Error(err)
-		return responses.System(nil, err.Error())
+		return responses.System("failed to fetch session", err.Error())
 	}
 
 	s.UpdateActivity()

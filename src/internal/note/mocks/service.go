@@ -94,6 +94,22 @@ func (mr *MockRepositoryMockRecorder) FetchAll(ctx, userId interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAll", reflect.TypeOf((*MockRepository)(nil).FetchAll), ctx, userId)
 }
 
+// FetchPublic mocks base method.
+func (m *MockRepository) FetchPublic(ctx context.Context, page, limit int) ([]*note.Note, int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchPublic", ctx, page, limit)
+	ret0, _ := ret[0].([]*note.Note)
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FetchPublic indicates an expected call of FetchPublic.
+func (mr *MockRepositoryMockRecorder) FetchPublic(ctx, page, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPublic", reflect.TypeOf((*MockRepository)(nil).FetchPublic), ctx, page, limit)
+}
+
 // Update mocks base method.
 func (m *MockRepository) Update(ctx context.Context, note *note.NoteDTO) error {
 	m.ctrl.T.Helper()

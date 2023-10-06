@@ -36,11 +36,12 @@ type NoteDTO struct {
 
 // Repository defines the interface for note-related operations.
 type Repository interface {
-	Create(ctx context.Context, note *Note) error                    // Create adds a new note.
-	Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error)      // Fetch retrieves a note by its ID.
-	FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error) // FetchAll retrieves all notes of a specific user.
-	Delete(ctx context.Context, noteId uuid.UUID) error              // Delete removes a note by its ID.
-	Update(ctx context.Context, note *NoteDTO) error                 // Update modifies a note using a NoteDTO.
+	Create(ctx context.Context, note *Note) error                                 // Create adds a new note.
+	Fetch(ctx context.Context, noteId uuid.UUID) (*Note, error)                   // Fetch retrieves a note by its ID.
+	FetchAll(ctx context.Context, userId uuid.UUID) ([]*Note, error)              // FetchAll retrieves all notes of a specific user.
+	FetchPublic(ctx context.Context, page int, limit int) ([]*Note, int64, error) // FetchPublic retrieves all public notes
+	Delete(ctx context.Context, noteId uuid.UUID) error                           // Delete removes a note by its ID.
+	Update(ctx context.Context, note *NoteDTO) error                              // Update modifies a note using a NoteDTO.
 }
 
 var ErrNoteIsNotExists = errors.New("note is not exists")

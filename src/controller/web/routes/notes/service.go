@@ -1,6 +1,7 @@
 package notes
 
 import (
+	"math"
 	"net/http"
 	"notes-manager/src/controller/web/headers"
 	"notes-manager/src/controller/web/responses"
@@ -27,10 +28,38 @@ func New(repo *repository.Repository) *Router {
 // @Tags         notes
 // @Accept       json
 // @Produce      json
+// @Param 		 public query bool false "Fetch all public notes" default(false)
+// @Param 		 page query int false "Page" minimum(1) default(1)
+// @Param 		 per_page query int false "Notes per page" minimum(1) maximum(50) default(50)
 // @Success      200  {object}  UserNotesResponse
+// @Success      400  {object}  UserNotesResponse
 // @Failure      500  {object}  responses.Error
 // @Router       /v0/notes [get]
 func (r *Router) FetchAll(c *fiber.Ctx) error {
+	params := FetchAllParams{}
+	if err := c.QueryParser(&params); err != nil {
+		return responses.BadRequest("failed to parse queries", err.Error())
+	}
+
+	if params.Public {
+		if err := r.validator.StructCtx(c.Context(), &params); err != nil {
+			return responses.BadRequest("some fields is invalid", err.Error())
+		}
+
+		notes, count, err := r.repo.Notes.FetchPublic(c.Context(), params.Page, params.PerPage)
+		if err != nil {
+			logrus.Error(err)
+			return responses.System("failed to fetch public notes", err.Error())
+		}
+
+		pages := int64(math.Ceil(float64(count) / float64(params.PerPage)))
+
+		return c.JSON(&UserNotesResponse{
+			Notes: notes,
+			Pages: pages,
+		})
+	}
+
 	s := r.headers.GetSession(c)
 
 	notes, err := r.repo.Notes.FetchAll(c.Context(), s.UserId)
@@ -41,6 +70,7 @@ func (r *Router) FetchAll(c *fiber.Ctx) error {
 
 	return c.JSON(&UserNotesResponse{
 		Notes: notes,
+		Pages: 0,
 	})
 }
 
@@ -105,6 +135,7 @@ func (r *Router) Create(c *fiber.Ctx) error {
 	n := note.New(s.UserId, request.Title, request.Content, true)
 
 	if err := r.repo.Notes.Create(c.Context(), n); err != nil {
+		logrus.Error(err)
 		return responses.System("failed to create new note", err.Error())
 	}
 

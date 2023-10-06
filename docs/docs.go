@@ -146,9 +146,41 @@ const docTemplate = `{
                     "notes"
                 ],
                 "summary": "Fetch all notes",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Fetch all public notes",
+                        "name": "public",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 50,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Notes per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notes.UserNotesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/notes.UserNotesResponse"
                         }
@@ -497,6 +529,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/note.Note"
                     }
+                },
+                "pages": {
+                    "type": "integer"
                 }
             }
         },
